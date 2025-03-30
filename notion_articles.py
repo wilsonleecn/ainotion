@@ -87,7 +87,7 @@ def main():
     
     # 获取数据库中的所有页面
     pages = extractor.get_database_content(DATABASE_ID)
-    
+    print("===========")
     for page in pages:
         try:
             # 获取页面标题 - 将 'Name' 改为您的实际标题列名
