@@ -82,14 +82,37 @@ def main():
     
     notion = Client(auth=NOTION_TOKEN)
     
-    # 列出所有可访问的数据库
+    def print_database_info(database_id, level=0):
+        """递归打印数据库及其子数据库的信息"""
+        try:
+            # 获取数据库中的页面
+            response = notion.databases.query(database_id=database_id)
+            
+            # 遍历所有页面
+            for page in response['results']:
+                # 检查页面是否包含子数据库s
+                sub_pages = notion.blocks.children.list(block_id=page['id'])
+                for block in sub_pages['results']:
+                    if block['type'] == 'child_database':
+                        indent = "  " * level
+                        print(f"{indent}子数据库ID: {block['id']}")
+                        print(f"{indent}子数据库标题: {block['child_database']['title']}")
+                        print(f"{indent}---")
+                        # 递归访问子数据库
+                        print_database_info(block['id'], level + 1)
+        except Exception as e:
+            print(f"访问数据库 {database_id} 时出错: {str(e)}")
+    
+    # 列出所有顶级数据库
     try:
         response = notion.search(filter={"property": "object", "value": "database"})
-        print("可访问的数据库列表：")
+        print("数据库层级结构：")
         for item in response['results']:
-            print(f"数据库ID: {item['id']}")
-            print(f"数据库标题: {item['title'][0]['plain_text'] if item['title'] else 'Untitled'}")
+            print(f"顶级数据库ID: {item['id']}")
+            print(f"顶级数据库标题: {item['title'][0]['plain_text'] if item['title'] else 'Untitled'}")
             print("---")
+            # 递归查找子数据库
+            print_database_info(item['id'])
     except Exception as e:
         print(f"搜索数据库时出错: {str(e)}")
 
