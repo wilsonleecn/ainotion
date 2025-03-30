@@ -11,6 +11,7 @@ class NotionArticleExtractor:
         """获取指定数据库中的所有文章"""
         try:
             # 查询数据库
+            print(f"正在尝试访问数据库: {database_id}")
             response = self.notion.databases.query(
                 database_id=database_id,
                 sorts=[{
@@ -19,9 +20,18 @@ class NotionArticleExtractor:
                 }]
             )
             
+            # 打印数据库结构信息
+            if 'results' in response and len(response['results']) > 0:
+                print("成功获取数据库内容")
+                first_page = response['results'][0]
+                print("数据库列名:", list(first_page['properties'].keys()))
+            else:
+                print("数据库是空的或没有权限访问内容")
+            
             return response['results']
         except Exception as e:
             print(f"获取数据库内容时出错: {str(e)}")
+            print(f"错误类型: {type(e)}")
             return []
     
     def extract_page_content(self, page_id):
@@ -69,8 +79,8 @@ class NotionArticleExtractor:
 
 def main():
     # 替换为您的Notion API密钥
-    NOTION_TOKEN = "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"
-    # 替换为您的数据库ID
+    NOTION_TOKEN = "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"
+    # 替换为您的数据库ID（添加破折号）
     DATABASE_ID = "113c04e7666e808abddbcf45ae97e86b"
     
     extractor = NotionArticleExtractor(NOTION_TOKEN)
@@ -80,8 +90,8 @@ def main():
     
     for page in pages:
         try:
-            # 获取页面标题
-            title = page['properties']['Name']['title'][0]['plain_text']
+            # 获取页面标题 - 将 'Name' 改为您的实际标题列名
+            title = page['properties']['您的标题列名']['title'][0]['plain_text']
             # 获取页面内容
             content = extractor.extract_page_content(page['id'])
             # 保存文章
