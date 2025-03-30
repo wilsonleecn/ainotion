@@ -82,39 +82,75 @@ def main():
     
     notion = Client(auth=NOTION_TOKEN)
     
-    def print_database_info(database_id, level=0):
-        """递归打印数据库及其子数据库的信息"""
+    def print_page_info(page, level=0):
+        """打印页面信息"""
+        indent = "  " * level
+        # 获取页面标题
+        title = "Untitled"
+        if 'properties' in page:
+            # 尝试不同的标题属性名
+            title_props = ['Name', 'title', 'Title']
+            for prop_name in title_props:
+                if prop_name in page['properties']:
+                    title_array = page['properties'][prop_name].get('title', [])
+                    if title_array:
+                        title = title_array[0]['plain_text']
+                        break
+        
+        print(f"{indent}页面ID: {page['id']}")
+        print(f"{indent}页面标题: {title}")
+        print(f"{indent}创建时间: {page['created_time']}")
+        print(f"{indent}最后编辑时间: {page['last_edited_time']}")
+        
         try:
-            # 获取数据库中的页面
-            response = notion.databases.query(database_id=database_id)
+            # 获取子页面
+            children = notion.blocks.children.list(block_id=page['id'])
+            has_children = False
             
-            # 遍历所有页面
-            for page in response['results']:
-                # 检查页面是否包含子数据库s
-                sub_pages = notion.blocks.children.list(block_id=page['id'])
-                for block in sub_pages['results']:
-                    if block['type'] == 'child_database':
-                        indent = "  " * level
-                        print(f"{indent}子数据库ID: {block['id']}")
-                        print(f"{indent}子数据库标题: {block['child_database']['title']}")
-                        print(f"{indent}---")
-                        # 递归访问子数据库
-                        print_database_info(block['id'], level + 1)
+            for block in children['results']:
+                if block['type'] in ['child_page', 'child_database']:
+                    has_children = True
+                    print(f"{indent}  └─ 子{block['type']}: {block['id']}")
+                    if block['type'] == 'child_page':
+                        # 递归获取子页面信息
+                        sub_page = notion.pages.retrieve(page_id=block['id'])
+                        print_page_info(sub_page, level + 2)
+            
+            if has_children:
+                print(f"{indent}---")
+                
         except Exception as e:
-            print(f"访问数据库 {database_id} 时出错: {str(e)}")
+            print(f"{indent}获取子页面时出错: {str(e)}")
     
-    # 列出所有顶级数据库
+    # 使用search API获取所有页面
     try:
-        response = notion.search(filter={"property": "object", "value": "database"})
-        print("数据库层级结构：")
-        for item in response['results']:
-            print(f"顶级数据库ID: {item['id']}")
-            print(f"顶级数据库标题: {item['title'][0]['plain_text'] if item['title'] else 'Untitled'}")
-            print("---")
-            # 递归查找子数据库
-            print_database_info(item['id'])
+        print("所有可访问的页面：")
+        print("================")
+        
+        # 初始化游标
+        start_cursor = None
+        while True:
+            # 搜索页面
+            response = notion.search(
+                filter={"property": "object", "value": "page"},
+                start_cursor=start_cursor,
+                page_size=100  # 每次获取100个结果
+            )
+            
+            # 打印当前批次的页面信息
+            for page in response['results']:
+                print_page_info(page)
+                print("---")
+            
+            # 检查是否还有更多结果
+            if not response.get('has_more'):
+                break
+                
+            # 更新游标以获取下一批结果
+            start_cursor = response.get('next_cursor')
+            
     except Exception as e:
-        print(f"搜索数据库时出错: {str(e)}")
+        print(f"搜索页面时出错: {str(e)}")
 
 if __name__ == "__main__":
     main() 
