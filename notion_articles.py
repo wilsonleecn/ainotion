@@ -81,7 +81,7 @@ def main():
     # 替换为您的Notion API密钥
     NOTION_TOKEN = "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"
     # 替换为您的数据库ID（添加破折号）
-    DATABASE_ID = "f3cd979bd5a34bd0a2b96b7370188866"
+    DATABASE_ID = "113c04e7666e808abddbcf45ae97e86b"
     
     extractor = NotionArticleExtractor(NOTION_TOKEN)
     
