@@ -78,27 +78,20 @@ class NotionArticleExtractor:
             print(f"保存文件时出错: {str(e)}")
 
 def main():
-    # 替换为您的Notion API密钥
     NOTION_TOKEN = "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"
-    # 替换为您的数据库ID（添加破折号）
-    DATABASE_ID = "f3cd979bd5a34bd0a2b96b7370188866"
     
-    extractor = NotionArticleExtractor(NOTION_TOKEN)
+    notion = Client(auth=NOTION_TOKEN)
     
-    # 获取数据库中的所有页面
-    pages = extractor.get_database_content(DATABASE_ID)
-    print("===========")
-    for page in pages:
-        try:
-            # 获取页面标题 - 将 'Name' 改为您的实际标题列名
-            title = page['properties']['您的标题列名']['title'][0]['plain_text']
-            # 获取页面内容
-            content = extractor.extract_page_content(page['id'])
-            # 保存文章
-            extractor.save_to_file(title, content)
-        except Exception as e:
-            print(f"处理页面时出错: {str(e)}")
-            continue
+    # 列出所有可访问的数据库
+    try:
+        response = notion.search(filter={"property": "object", "value": "database"})
+        print("可访问的数据库列表：")
+        for item in response['results']:
+            print(f"数据库ID: {item['id']}")
+            print(f"数据库标题: {item['title'][0]['plain_text'] if item['title'] else 'Untitled'}")
+            print("---")
+    except Exception as e:
+        print(f"搜索数据库时出错: {str(e)}")
 
 if __name__ == "__main__":
     main() 
