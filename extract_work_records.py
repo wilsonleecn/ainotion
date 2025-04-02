@@ -3,11 +3,19 @@ import json
 from notion_client import Client
 from datetime import datetime
 import re
+import mysql.connector
 
 class WorkRecordExtractor:
     def __init__(self, token):
         """初始化Notion客户端"""
         self.notion = Client(auth=token)
+        # 添加数据库连接配置
+        self.db_config = {
+            'host': 'mariadb',
+            'user': 'dbuer',  # 请根据实际情况修改
+            'password': 'db3213',  # 请根据实际情况修改
+            'database': 'work_records'
+        }
         
     def find_work_record_pages(self):
         """查找所有工作记录相关的页面"""
@@ -147,6 +155,87 @@ class WorkRecordExtractor:
         except Exception as e:
             print(f"保存JSON文件时出错: {str(e)}")
 
+    def save_to_database(self, all_data):
+        """保存数据到MySQL数据库"""
+        try:
+            conn = mysql.connector.connect(**self.db_config)
+            cursor = conn.cursor()
+
+            for page_title, page_data in all_data.items():
+                # 从标题中提取年月 (格式：工作记录YYYYMM)
+                year_month = page_title[-6:]  # 获取YYYYMM部分
+                
+                # 删除同年同月的记录
+                cursor.execute("""
+                    DELETE r, c 
+                    FROM records r
+                    LEFT JOIN co_workers c ON r.id = c.record_id
+                    WHERE r.page_id IN (
+                        SELECT id FROM pages 
+                        WHERE title LIKE %s
+                    )
+                """, (f'%{year_month}',))
+                
+                cursor.execute("DELETE FROM pages WHERE title LIKE %s", (f'%{year_month}',))
+                
+                # 插入页面信息
+                page_info = page_data['page_info']
+                cursor.execute("""
+                    INSERT INTO pages (id, title, created_time, last_edited_time, database_id)
+                    VALUES (%s, %s, %s, %s, %s)
+                """, (
+                    page_info['id'],
+                    page_info['title'],
+                    datetime.fromisoformat(page_info['created_time'].replace('Z', '+00:00')),
+                    datetime.fromisoformat(page_info['last_edited_time'].replace('Z', '+00:00')),
+                    page_data['database_id']
+                ))
+
+                # 插入记录
+                for record in page_data['records']:
+                    props = record['properties']
+                    cursor.execute("""
+                        INSERT INTO records (
+                            id, page_id, created_time, last_edited_time,
+                            title, type, note, timestamp, status,
+                            details, request_from
+                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    """, (
+                        record['id'],
+                        page_info['id'],
+                        datetime.fromisoformat(record['created_time'].replace('Z', '+00:00')),
+                        datetime.fromisoformat(record['last_edited_time'].replace('Z', '+00:00')),
+                        props.get('标题', ''),
+                        props.get('类型', ''),
+                        props.get('备注', ''),
+                        props.get('时间'),
+                        props.get('状态', ''),
+                        props.get('详情', ''),
+                        props.get('来源', '')
+                    ))
+
+                    # 插入协作者信息
+                    co_workers = props.get('协作者', [])
+                    if isinstance(co_workers, list):
+                        for co_worker in co_workers:
+                            cursor.execute("""
+                                INSERT INTO co_workers (record_id, co_worker_name)
+                                VALUES (%s, %s)
+                            """, (record['id'], co_worker))
+
+            conn.commit()
+            print("数据已成功保存到数据库")
+
+        except Exception as e:
+            print(f"保存到数据库时出错: {str(e)}")
+            if conn:
+                conn.rollback()
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
+
 def main():
     NOTION_TOKEN = "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"
     
@@ -183,6 +272,9 @@ def main():
     # 保存所有数据
     output_filename = f"work_records_{datetime.now().strftime('%Y%m%d')}.json"
     extractor.save_to_json(all_data, output_filename)
+    
+    # 添加保存到数据库的步骤
+    extractor.save_to_database(all_data)
 
 if __name__ == "__main__":
     main() 
