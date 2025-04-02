@@ -1,0 +1,18 @@
+services:
+  mariadb:
+    image: mariadb:latest
+    container_name: mariadb
+    restart: always
+    # Set root password
+    environment:
+      - MARIADB_ROOT_PASSWORD=root
+      - MARIADB_DATABASE=work_records
+      - MARIADB_USER=dbuser
+      - MARIADB_PASSWORD=db3213
+    # Expose the MySQL port.
+    expose:
+      - "3306"
+    # Mount our init scripts
+    volumes:
+      - ./db/init:/docker-entrypoint-initdb.d
+      - /data/db:/var/lib/mysql
