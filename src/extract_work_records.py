@@ -7,34 +7,34 @@ import mysql.connector
 
 class WorkRecordExtractor:
     def __init__(self, token):
-        """初始化Notion客户端"""
+        """Initialize Notion client and database configuration"""
         self.notion = Client(auth=token)
-        # 添加数据库连接配置
+        # Add database connection configuration
         self.db_config = {
             'host': 'mariadb',
-            'user': 'dbuser',  # 请根据实际情况修改
-            'password': 'db3213',  # 请根据实际情况修改
+            'user': 'dbuser',  # Please modify according to actual situation
+            'password': 'db3213',  # Please modify according to actual situation
             'database': 'work_records'
         }
         
     def find_work_record_pages(self):
-        """查找所有工作记录相关的页面"""
+        """Find all work record related pages"""
         work_records = []
         start_cursor = None
         
         while True:
             response = self.notion.search(
-                query="工作记录",
+                query="工作记录",  # Search for "Work Record" in Chinese
                 filter={"property": "object", "value": "page"},
                 start_cursor=start_cursor,
                 page_size=100
             )
             
             for page in response['results']:
-                # 获取页面标题
+                # Get page title
                 title = self._get_page_title(page)
                 
-                # 检查是否是月度工作记录（格式：工作记录YYYYMM）
+                # Check if it's a monthly work record (format: 工作记录YYYYMM)
                 if re.match(r'工作记录\d{6}$', title):
                     work_records.append({
                         'id': page['id'],
@@ -50,7 +50,7 @@ class WorkRecordExtractor:
         return work_records
 
     def _get_page_title(self, page):
-        """获取页面标题"""
+        """Get page title"""
         if 'properties' not in page:
             return "Untitled"
             
@@ -63,7 +63,7 @@ class WorkRecordExtractor:
         return "Untitled"
 
     def find_database_in_page(self, page_id):
-        """在页面中查找数据库"""
+        """Find database in page"""
         try:
             children = self.notion.blocks.children.list(block_id=page_id)
             for block in children['results']:
@@ -71,11 +71,11 @@ class WorkRecordExtractor:
                     return block['id']
             return None
         except Exception as e:
-            print(f"查找数据库时出错: {str(e)}")
+            print(f"Error finding database: {str(e)}")
             return None
 
     def extract_database_content(self, database_id):
-        """提取数据库内容"""
+        """Extract database content"""
         try:
             all_records = []
             has_more = True
@@ -98,7 +98,7 @@ class WorkRecordExtractor:
             return all_records
             
         except Exception as e:
-            print(f"提取数据库内容时出错: {str(e)}")
+            print(f"Error extracting database content: {str(e)}")
             return []
 
     def _process_record(self, record):
@@ -147,25 +147,25 @@ class WorkRecordExtractor:
         return " ".join(text['plain_text'] for text in rich_text_array)
 
     def save_to_json(self, data, filename="work_records.json"):
-        """保存数据到JSON文件"""
+        """Save data to JSON file"""
         try:
             with open(filename, 'w', encoding='utf-8') as f:
                 json.dump(data, f, ensure_ascii=False, indent=2)
-            print(f"数据已保存到: {filename}")
+            print(f"Data saved to: {filename}")
         except Exception as e:
-            print(f"保存JSON文件时出错: {str(e)}")
+            print(f"Error saving JSON file: {str(e)}")
 
     def save_to_database(self, all_data):
-        """保存数据到MySQL数据库"""
+        """Save data to MySQL database"""
         try:
             conn = mysql.connector.connect(**self.db_config)
             cursor = conn.cursor()
 
             for page_title, page_data in all_data.items():
-                # 从标题中提取年月 (格式：工作记录YYYYMM)
-                year_month = page_title[-6:]  # 获取YYYYMM部分
+                # Extract year and month from title (format: 工作记录YYYYMM)
+                year_month = page_title[-6:]  # Get YYYYMM part
                 
-                # 删除同年同月的记录
+                # Delete records from the same year and month
                 cursor.execute("""
                     DELETE r, c 
                     FROM records r
@@ -178,7 +178,7 @@ class WorkRecordExtractor:
                 
                 cursor.execute("DELETE FROM pages WHERE title LIKE %s", (f'%{year_month}',))
                 
-                # 插入页面信息
+                # Insert page information
                 page_info = page_data['page_info']
                 cursor.execute("""
                     INSERT INTO pages (id, title, created_time, last_edited_time, database_id)
@@ -191,7 +191,7 @@ class WorkRecordExtractor:
                     page_data['database_id']
                 ))
 
-                # 插入记录
+                # Insert records
                 for record in page_data['records']:
                     props = record['properties']
                     cursor.execute("""
@@ -205,17 +205,17 @@ class WorkRecordExtractor:
                         page_info['id'],
                         datetime.fromisoformat(record['created_time'].replace('Z', '+00:00')),
                         datetime.fromisoformat(record['last_edited_time'].replace('Z', '+00:00')),
-                        props.get('标题', ''),
-                        props.get('类型', ''),
-                        props.get('备注', ''),
-                        props.get('时间'),
-                        props.get('状态', ''),
-                        props.get('详情', ''),
-                        props.get('来源', '')
+                        props.get('Title', ''),
+                        ','.join(props.get('Type', [])),
+                        props.get('Note', ''),
+                        props.get('timestamp'),
+                        props.get('Status', ''),
+                        props.get('Details', ''),
+                        props.get('Request from', '')
                     ))
 
-                    # 插入协作者信息
-                    co_workers = props.get('协作者', [])
+                    # Insert co-worker information
+                    co_workers = props.get('Co-worker', [])
                     if isinstance(co_workers, list):
                         for co_worker in co_workers:
                             cursor.execute("""
@@ -224,10 +224,10 @@ class WorkRecordExtractor:
                             """, (record['id'], co_worker))
 
             conn.commit()
-            print("数据已成功保存到数据库")
+            print("Data successfully saved to database")
 
         except Exception as e:
-            print(f"保存到数据库时出错: {str(e)}")
+            print(f"Error saving to database: {str(e)}")
             if conn:
                 conn.rollback()
         finally:
@@ -241,39 +241,39 @@ def main():
     
     extractor = WorkRecordExtractor(NOTION_TOKEN)
     
-    # 查找所有工作记录页面
-    print("正在查找工作记录页面...")
+    # Find all work record pages
+    print("Finding work record pages...")
     work_records = extractor.find_work_record_pages()
-    print(f"找到 {len(work_records)} 个工作记录页面")
+    print(f"Found {len(work_records)} work record pages")
     
-    # 收集所有数据库内容
+    # Collect all database content
     all_data = {}
     for record in work_records:
-        print(f"\n处理页面: {record['title']}")
+        print(f"\nProcessing page: {record['title']}")
         
-        # 查找数据库ID
+        # Find database ID
         database_id = extractor.find_database_in_page(record['id'])
         if not database_id:
-            print(f"在页面 {record['title']} 中未找到数据库")
+            print(f"No database found in page {record['title']}")
             continue
             
-        # 提取数据库内容
-        print(f"正在提取数据库内容...")
+        # Extract database content
+        print(f"Extracting database content...")
         database_content = extractor.extract_database_content(database_id)
-        print(f"提取了 {len(database_content)} 条记录")
+        print(f"Extracted {len(database_content)} records")
         
-        # 存储数据
+        # Store data
         all_data[record['title']] = {
             'page_info': record,
             'database_id': database_id,
             'records': database_content
         }
     
-    # 保存所有数据
+    # Save all data
     output_filename = f"work_records_{datetime.now().strftime('%Y%m%d')}.json"
     extractor.save_to_json(all_data, output_filename)
     
-    # 添加保存到数据库的步骤
+    # Add step to save to database
     extractor.save_to_database(all_data)
 
 if __name__ == "__main__":
