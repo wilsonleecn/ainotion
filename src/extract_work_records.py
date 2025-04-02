@@ -1,7 +1,7 @@
 import os
 import json
 from notion_client import Client
-from datetime import datetime
+from datetime import datetime, timezone
 import re
 import mysql.connector
 
@@ -155,6 +155,18 @@ class WorkRecordExtractor:
         except Exception as e:
             print(f"Error saving JSON file: {str(e)}")
 
+    def _convert_timestamp(self, timestamp_str):
+        """Convert ISO 8601 timestamp string to MySQL datetime format"""
+        if not timestamp_str:
+            return None
+        try:
+            # Parse the ISO timestamp string to datetime object
+            dt = datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
+            # Convert to UTC
+            return dt.astimezone(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
+        except Exception:
+            return None
+
     def save_to_database(self, all_data):
         """Save data to MySQL database"""
         try:
@@ -208,7 +220,7 @@ class WorkRecordExtractor:
                         props.get('Title', ''),
                         ','.join(props.get('Type', [])),
                         props.get('Note', ''),
-                        props.get('timestamp'),
+                        self._convert_timestamp(props.get('timestamp')),  # Convert timestamp format
                         props.get('Status', ''),
                         props.get('Details', ''),
                         props.get('Request from', '')
