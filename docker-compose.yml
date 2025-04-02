@@ -15,4 +15,4 @@ services:
     # Mount our init scripts
     volumes:
       - ./db/init:/docker-entrypoint-initdb.d
-      - /data/db:/var/lib/mysql
+      - /data/ainotion:/var/lib/mysql
