@@ -6,4 +6,4 @@ WORKDIR /home/work
 
 # Install required packages
 RUN pip install --upgrade pip && \
-    pip install notion-client pymysql
+    pip install notion-client pymysql mysql-connector-python
