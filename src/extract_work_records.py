@@ -12,7 +12,7 @@ class WorkRecordExtractor:
         # 添加数据库连接配置
         self.db_config = {
             'host': 'mariadb',
-            'user': 'dbuer',  # 请根据实际情况修改
+            'user': 'dbuser',  # 请根据实际情况修改
             'password': 'db3213',  # 请根据实际情况修改
             'database': 'work_records'
         }
