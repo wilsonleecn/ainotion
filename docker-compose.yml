@@ -16,3 +16,19 @@ services:
     volumes:
       - ./db/init:/docker-entrypoint-initdb.d
       - /data/ainotion:/var/lib/mysql
+  ainotion:
+    image: ainotion:latest
+    container_name: ainotion
+    restart: always
+    working_dir: /home/work/ainotion
+    # env_file:
+    #   - .env
+    volumes:
+      - ./src:/home/work/ainotion
+    # ports:
+    #   - "5000:5000"
+    # Keep container alive with tail -f /dev/null if no other command is needed
+    command: tail -f /dev/null
+    # Alternatively, uncomment one of these if you need to run a specific service:
+    # command: python web_server.py
+    # command: python gradio_chat.py
