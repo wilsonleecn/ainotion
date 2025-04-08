@@ -83,7 +83,7 @@ class WeeklyWorkLogExtractor:
                     print(f"Database ID found: {database_id}")
                     
                     if database_id:
-                        records = self.extract_database_content(database_id)
+                        records = self.extract_database_content(database_id, start_date, end_date)
                         print(f"Extracted {len(records)} records")
                         
                         if records:  # Only add pages that have records
@@ -123,11 +123,22 @@ class WeeklyWorkLogExtractor:
             print(f"Error finding database: {str(e)}")
             return None
 
-    def extract_database_content(self, database_id):
-        """Extract simplified database content"""
+    def extract_database_content(self, database_id, start_date, end_date):
+        """Extract simplified database content within the date range"""
         try:
             print(f"Extracting content from database: {database_id}")
-            response = self.notion.databases.query(database_id=database_id)
+            filter_condition = {
+                "property": "timestamp",  # 假设字段名为 "timestamp"
+                "date": {
+                    "on_or_after": start_date.isoformat(),
+                    "on_or_before": end_date.isoformat()
+                }
+            }
+            
+            response = self.notion.databases.query(
+                database_id=database_id,
+                filter=filter_condition
+            )
             
             print(f"Found {len(response['results'])} records in database")
             
