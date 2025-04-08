@@ -90,12 +90,22 @@ class WeeklyWorkLogExtractor:
                         # Filter records within the date range
                         filtered_records = []
                         for record in all_records:
-                            timestamp = record.get('properties', {}).get('timestamp', {}).get('date', {})
+                            props = record.get('properties', {})
+                            timestamp = props.get('timestamp', '')
                             if timestamp and timestamp.get('start'):
-                                # Convert to UTC, then remove timezone info for comparison
                                 record_date = datetime.fromisoformat(timestamp['start'].replace('Z', '+00:00')).replace(tzinfo=None)
                                 if start_date <= record_date <= end_date:
-                                    filtered_records.append(record)
+                                    # Simplify record structure
+                                    simplified_record = {
+                                        'timestamp': timestamp['start'],
+                                        'title': props.get('Title', ''),
+                                        'type': props.get('Type', []),
+                                        'status': props.get('Status', ''),
+                                        'note': props.get('Note', ''),
+                                        'co-worker': props.get('Co-worker', []),
+                                        'request_from': props.get('Request from', '')
+                                    }
+                                    filtered_records.append(simplified_record)
                         
                         print(f"Extracted {len(all_records)} records, {len(filtered_records)} within date range")
                         
