@@ -37,7 +37,7 @@ class WeeklyWorkLogExtractor:
     def get_work_logs_by_date_range(self, start_date, end_date):
         """
         Get work logs between start_date and end_date
-        Returns simplified JSON object with work logs
+        Returns array of work logs sorted by timestamp
         """
         print(f"\nSearching work logs from {start_date} to {end_date}")
         
@@ -46,9 +46,6 @@ class WeeklyWorkLogExtractor:
             start_date = datetime.strptime(start_date, '%Y-%m-%d')
         if isinstance(end_date, str):
             end_date = datetime.strptime(end_date, '%Y-%m-%d')
-
-        print(f"Start date (after conversion): {start_date}")
-        print(f"End date (after conversion): {end_date}")
 
         # Format dates for searching - modified to use YYYYMM format
         date_range = set()  # Using set to avoid duplicates
@@ -59,7 +56,7 @@ class WeeklyWorkLogExtractor:
             current_date += timedelta(days=1)
 
         print(f"Looking for pages with titles: {date_range}")
-        work_logs = {}
+        all_records = []  # Store all records here instead of using work_logs dict
         
         # Search for each monthly work log
         for date_title in date_range:
@@ -74,16 +71,14 @@ class WeeklyWorkLogExtractor:
             for page in response['results']:
                 title = self._get_page_title(page)
                 
-                # Changed to check if the title matches the monthly format
                 if title == date_title:
                     database_id = self.find_database_in_page(page['id'])
                     print(f"Database ID found: {database_id}")
                     
                     if database_id:
-                        all_records = self.extract_database_content(database_id, start_date, end_date)
+                        records = self.extract_database_content(database_id, start_date, end_date)
                         # Filter records within the date range
-                        filtered_records = []
-                        for record in all_records:
+                        for record in records:
                             props = record.get('properties', {})
                             timestamp = props.get('timestamp', {})
                             if timestamp and timestamp.get('date', {}).get('start'):
@@ -108,18 +103,13 @@ class WeeklyWorkLogExtractor:
                                         'co-worker': coworker_names,
                                         'request_from': request_from_text
                                     }
-                                    filtered_records.append(simplified_record)
-                        
-                        print(f"Extracted {len(all_records)} records, {len(filtered_records)} within date range")
-                        
-                        if filtered_records:  # Only add pages that have filtered records
-                            work_logs[title] = {
-                                'title': title,
-                                'records': filtered_records
-                            }
+                                    all_records.append(simplified_record)
         
-        print(f"\nTotal work logs found: {len(work_logs)}")
-        return work_logs
+        # Sort records by timestamp
+        all_records.sort(key=lambda x: x['timestamp'])
+        
+        print(f"\nTotal records found: {len(all_records)}")
+        return all_records
 
     def _get_page_title(self, page):
         """Get page title"""
