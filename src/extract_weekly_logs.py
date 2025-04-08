@@ -94,7 +94,7 @@ class WeeklyWorkLogExtractor:
                             timestamp = props.get('timestamp', '')
                             print(f"==timestamp: {timestamp}")
                             if timestamp and timestamp.get('date', {}).get('start'):
-                                print(f"==timestamp.get('date', {}).get('start'): {timestamp.get('date', {}).get('start')}")
+                                print(f"==start: {timestamp.get('date', {}).get('start')}")
                                 record_date = datetime.fromisoformat(timestamp['date']['start'].replace('Z', '+00:00')).replace(tzinfo=None)
                                 if start_date <= record_date <= end_date:
                                     # Simplify record structure
