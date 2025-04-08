@@ -19,7 +19,7 @@ class WeeklyWorkLogExtractor:
             date = datetime.now()
         elif isinstance(date, str):
             date = datetime.strptime(date, '%Y-%m-%d')
-
+        print(f"date: {date}")
         # 获取上周一的日期
         # 如果今天是周日(6)，减去7天得到上周日，再减去6天得到上周一
         # 如果是其他日子，先回到本周一，再减去7天得到上周一
