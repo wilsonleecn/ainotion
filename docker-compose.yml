@@ -9,6 +9,7 @@ services:
       - MARIADB_DATABASE=work_records
       - MARIADB_USER=dbuser
       - MARIADB_PASSWORD=db3213
+      - TZ=America/Los_Angeles
     # Expose the MySQL port.
     expose:
       - "3306"
@@ -16,6 +17,8 @@ services:
     volumes:
       - ./db/init:/docker-entrypoint-initdb.d
       - /data/ainotion:/var/lib/mysql
+      - /usr/share/zoneinfo/America/Los_Angeles:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
   ainotion:
     image: ainotion:latest
     container_name: ainotion
@@ -25,6 +28,8 @@ services:
     #   - .env
     volumes:
       - ./src:/home/work/ainotion
+      - /usr/share/zoneinfo/America/Los_Angeles:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
     # ports:
     #   - "5000:5000"
     # Keep container alive with tail -f /dev/null if no other command is needed
@@ -32,3 +37,5 @@ services:
     # Alternatively, uncomment one of these if you need to run a specific service:
     # command: python web_server.py
     # command: python gradio_chat.py
+    environment:
+      - TZ=America/Los_Angeles
