@@ -92,7 +92,8 @@ class WeeklyWorkLogExtractor:
                         for record in all_records:
                             timestamp = record.get('properties', {}).get('timestamp', {}).get('date', {})
                             if timestamp and timestamp.get('start'):
-                                record_date = datetime.fromisoformat(timestamp['start'].replace('Z', '+00:00'))
+                                # Convert to UTC, then remove timezone info for comparison
+                                record_date = datetime.fromisoformat(timestamp['start'].replace('Z', '+00:00')).replace(tzinfo=None)
                                 if start_date <= record_date <= end_date:
                                     filtered_records.append(record)
                         
