@@ -130,12 +130,7 @@ class WeeklyWorkLogExtractor:
             return None
 
     def extract_database_content(self, database_id, start_date, end_date):
-        """Extract simplified database content within the date range"""
         try:
-            print(f"Extracting content from database: {database_id}")
-            print(f"Filtering for records between {start_date.isoformat()} and {end_date.isoformat()}")
-            
-            # 修改过滤条件，使用精确的时间范围
             filter_condition = {
                 "property": "timestamp",
                 "date": {
@@ -143,22 +138,12 @@ class WeeklyWorkLogExtractor:
                     "before": (end_date.replace(hour=23, minute=59, second=59, microsecond=999999) + timedelta(days=1)).isoformat()
                 }
             }
-            print(f"Filter condition: {json.dumps(filter_condition, indent=2)}")
 
-            # 添加调试信息
             response = self.notion.databases.query(
                 database_id=database_id,
                 filter=filter_condition
             )
-            records = response.get('results', [])
-            print(f"Found {len(records)} records in database")
-            
-            for record in records:
-                props = record.get('properties', {})
-                timestamp = props.get('timestamp', {}).get('date', {}).get('start', '')
-                print(f"Record timestamp: {timestamp}")
-            
-            return records
+            return response.get('results', [])
 
         except Exception as e:
             print(f"Error extracting database content: {e}")
