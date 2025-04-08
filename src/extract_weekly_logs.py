@@ -78,7 +78,6 @@ class WeeklyWorkLogExtractor:
             
             for page in response['results']:
                 title = self._get_page_title(page)
-                print(f"Processing page with title: {title}")
                 
                 # Changed to check if the title matches the monthly format
                 if title == date_title:
@@ -147,7 +146,6 @@ class WeeklyWorkLogExtractor:
             children = self.notion.blocks.children.list(block_id=page_id)
             for block in children['results']:
                 if block['type'] == 'child_database':
-                    print(f"Found database with ID: {block['id']}")
                     return block['id']
             print("No database found in page")
             return None
