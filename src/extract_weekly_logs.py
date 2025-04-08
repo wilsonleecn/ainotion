@@ -23,15 +23,17 @@ class WeeklyWorkLogExtractor:
         # 获取上周一的日期
         # 如果今天是周日(6)，减去7天得到上周日，再减去6天得到上周一
         # 如果是其他日子，先回到本周一，再减去7天得到上周一
+        print(f"date.weekday(): {date.weekday()}")
         if date.weekday() == 6:  # 周日
             monday = date - timedelta(days=13)
+            print(f"monday: {monday}")
         else:
             # 先回到本周一，再减去7天
             monday = date - timedelta(days=date.weekday()) - timedelta(days=7)
-        
+            print(f"monday: {monday}")
         # 从周一开始加6天得到周日
         sunday = monday + timedelta(days=6)
-        
+        print(f"sunday: {sunday}")
         return monday, sunday
 
     def get_work_logs_by_date_range(self, start_date, end_date):
