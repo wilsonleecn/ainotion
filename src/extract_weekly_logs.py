@@ -135,42 +135,33 @@ class WeeklyWorkLogExtractor:
             print(f"Extracting content from database: {database_id}")
             print(f"Filtering for records between {start_date.isoformat()} and {end_date.isoformat()}")
             
+            # 修改过滤条件，使用精确的时间范围
             filter_condition = {
                 "property": "timestamp",
                 "date": {
-                    "after": (start_date - timedelta(days=1)).isoformat(),  # 前一天的结束
-                    "before": (end_date + timedelta(days=1)).isoformat()    # 后一天的开始
+                    "after": start_date.replace(hour=0, minute=0, second=0, microsecond=0).isoformat(),
+                    "before": (end_date.replace(hour=23, minute=59, second=59, microsecond=999999) + timedelta(days=1)).isoformat()
                 }
             }
             print(f"Filter condition: {json.dumps(filter_condition, indent=2)}")
-            
+
+            # 添加调试信息
             response = self.notion.databases.query(
                 database_id=database_id,
                 filter=filter_condition
             )
+            records = response.get('results', [])
+            print(f"Found {len(records)} records in database")
             
-            print(f"Found {len(response['results'])} records in database")
-            if len(response['results']) == 0:
-                print("No records found matching the date filter")
+            for record in records:
+                props = record.get('properties', {})
+                timestamp = props.get('timestamp', {}).get('date', {}).get('start', '')
+                print(f"Record timestamp: {timestamp}")
             
-            simplified_records = []
-            for record in response['results']:
-                processed = self._process_record(record)
-                if processed['properties']:
-                    print(f"Record properties: {json.dumps(processed['properties'], indent=2)}")
-                    simplified_record = {
-                        'id': record['id'],
-                        'properties': processed['properties']
-                    }
-                    simplified_records.append(simplified_record)
-                else:
-                    print(f"Skipping record {record['id']} - no properties found")
-            
-            print(f"Processed {len(simplified_records)} records with properties")
-            return simplified_records
-            
+            return records
+
         except Exception as e:
-            print(f"Error extracting database content: {str(e)}")
+            print(f"Error extracting database content: {e}")
             return []
 
     def _process_record(self, record):
