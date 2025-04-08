@@ -136,10 +136,10 @@ class WeeklyWorkLogExtractor:
             print(f"Filtering for records between {start_date.isoformat()} and {end_date.isoformat()}")
             
             filter_condition = {
-                "property": "timestamp",  # 假设字段名为 "timestamp"
+                "property": "timestamp",
                 "date": {
-                    "on_or_after": start_date.isoformat(),
-                    "on_or_before": end_date.isoformat()
+                    "after": (start_date - timedelta(days=1)).isoformat(),  # 前一天的结束
+                    "before": (end_date + timedelta(days=1)).isoformat()    # 后一天的开始
                 }
             }
             print(f"Filter condition: {json.dumps(filter_condition, indent=2)}")
