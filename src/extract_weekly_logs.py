@@ -99,14 +99,19 @@ class WeeklyWorkLogExtractor:
                                     note_text = props.get('Note', {}).get('rich_text', [{}])[0].get('plain_text', '') if props.get('Note', {}).get('rich_text') else ''
                                     request_from_text = props.get('Request from', {}).get('rich_text', [{}])[0].get('plain_text', '') if props.get('Request from', {}).get('rich_text') else ''
                                     
+                                    # Extract type names from multi_select
+                                    type_names = [t.get('name', '') for t in props.get('Type', {}).get('multi_select', [])]
+                                    # Extract co-worker names from multi_select
+                                    coworker_names = [c.get('name', '') for c in props.get('Co-worker', {}).get('multi_select', [])]
+                                    
                                     # Simplify record structure
                                     simplified_record = {
                                         'timestamp': timestamp['date']['start'],
                                         'title': props.get('Title', {}).get('title', [{}])[0].get('plain_text', ''),
-                                        'type': props.get('Type', {}).get('multi_select', []),
+                                        'type': type_names,
                                         'status': props.get('Status', {}).get('select', {}).get('name', ''),
                                         'note': note_text,
-                                        'co-worker': props.get('Co-worker', {}).get('multi_select', []),
+                                        'co-worker': coworker_names,
                                         'request_from': request_from_text
                                     }
                                     filtered_records.append(simplified_record)
