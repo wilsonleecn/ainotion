@@ -35,6 +35,8 @@ class WeeklyWorkLogExtractor:
         Get work logs between start_date and end_date
         Returns simplified JSON object with work logs
         """
+        print(f"\nSearching work logs from {start_date} to {end_date}")
+        
         # Convert dates to datetime if they're strings
         if isinstance(start_date, str):
             start_date = datetime.strptime(start_date, '%Y-%m-%d')
@@ -48,27 +50,38 @@ class WeeklyWorkLogExtractor:
             date_range.append(f"Work Log {current_date.strftime('%Y%m%d')}")
             current_date += timedelta(days=1)
 
+        print(f"Looking for pages with titles: {date_range}")
         work_logs = {}
         
         # Search for each daily work log
         for date_title in date_range:
+            print(f"\nSearching for: {date_title}")
             response = self.notion.search(
                 query=date_title,
                 filter={"property": "object", "value": "page"}
             )
             
+            print(f"Found {len(response['results'])} results")
+            
             for page in response['results']:
                 title = self._get_page_title(page)
+                print(f"Processing page with title: {title}")
+                
                 if title == date_title:
                     database_id = self.find_database_in_page(page['id'])
+                    print(f"Database ID found: {database_id}")
+                    
                     if database_id:
                         records = self.extract_database_content(database_id)
+                        print(f"Extracted {len(records)} records")
+                        
                         if records:  # Only add pages that have records
                             work_logs[title] = {
                                 'title': title,
                                 'records': records
                             }
         
+        print(f"\nTotal work logs found: {len(work_logs)}")
         return work_logs
 
     def _get_page_title(self, page):
@@ -87,18 +100,25 @@ class WeeklyWorkLogExtractor:
     def find_database_in_page(self, page_id):
         """Find database in page"""
         try:
+            print(f"Looking for database in page: {page_id}")
             children = self.notion.blocks.children.list(block_id=page_id)
             for block in children['results']:
                 if block['type'] == 'child_database':
+                    print(f"Found database with ID: {block['id']}")
                     return block['id']
+            print("No database found in page")
             return None
-        except Exception:
+        except Exception as e:
+            print(f"Error finding database: {str(e)}")
             return None
 
     def extract_database_content(self, database_id):
         """Extract simplified database content"""
         try:
+            print(f"Extracting content from database: {database_id}")
             response = self.notion.databases.query(database_id=database_id)
+            
+            print(f"Found {len(response['results'])} records in database")
             
             simplified_records = []
             for record in response['results']:
@@ -110,9 +130,11 @@ class WeeklyWorkLogExtractor:
                     }
                     simplified_records.append(simplified_record)
             
+            print(f"Processed {len(simplified_records)} records with properties")
             return simplified_records
             
-        except Exception:
+        except Exception as e:
+            print(f"Error extracting database content: {str(e)}")
             return []
 
     def _process_record(self, record):
@@ -162,11 +184,13 @@ def main():
     
     # Get the latest complete week's date range
     start_date, end_date = extractor.get_latest_complete_week()
+    print(f"\nLatest complete week: {start_date.strftime('%Y-%m-%d')} to {end_date.strftime('%Y-%m-%d')}")
     
     # Get work logs for the date range
     work_logs = extractor.get_work_logs_by_date_range(start_date, end_date)
     
     # Output JSON to stdout
+    print("\nFinal output:")
     print(json.dumps(work_logs, ensure_ascii=False, indent=2))
 
 if __name__ == "__main__":
