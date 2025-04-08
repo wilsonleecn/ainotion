@@ -13,7 +13,7 @@ class WeeklyWorkLogExtractor:
         """
         Get the start and end dates of the latest complete week before the given date
         If no date provided, use current date
-        Returns (monday_date, sunday_date)
+        Returns (monday_date, sunday_date) where both dates are at midnight (00:00:00)
         """
         if date is None:
             date = datetime.now()
@@ -33,6 +33,11 @@ class WeeklyWorkLogExtractor:
             print(f"monday: {monday}")
         # 从周一开始加6天得到周日
         sunday = monday + timedelta(days=6)
+        print(f"sunday: {sunday}")
+        # Set both dates to midnight
+        monday = monday.replace(hour=0, minute=0, second=0, microsecond=0)
+        sunday = (monday + timedelta(days=6)).replace(hour=0, minute=0, second=0, microsecond=0)
+        print(f"monday: {monday}")
         print(f"sunday: {sunday}")
         return monday, sunday
 
