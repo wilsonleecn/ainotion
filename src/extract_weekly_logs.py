@@ -57,19 +57,19 @@ class WeeklyWorkLogExtractor:
         print(f"Start date (after conversion): {start_date}")
         print(f"End date (after conversion): {end_date}")
 
-        # Format dates for searching
-        date_range = []
+        # Format dates for searching - modified to use YYYYMM format
+        date_range = set()  # Using set to avoid duplicates
         current_date = start_date
         while current_date <= end_date:
-            formatted_date = f"Work Log {current_date.strftime('%Y%m%d')}"
-            date_range.append(formatted_date)
+            formatted_date = f"Work Log {current_date.strftime('%Y%m')}"
+            date_range.add(formatted_date)
             print(f"Adding date to search: {formatted_date}")
             current_date += timedelta(days=1)
 
         print(f"Looking for pages with titles: {date_range}")
         work_logs = {}
         
-        # Search for each daily work log
+        # Search for each monthly work log
         for date_title in date_range:
             print(f"\nSearching for: {date_title}")
             response = self.notion.search(
@@ -83,6 +83,7 @@ class WeeklyWorkLogExtractor:
                 title = self._get_page_title(page)
                 print(f"Processing page with title: {title}")
                 
+                # Changed to check if the title matches the monthly format
                 if title == date_title:
                     database_id = self.find_database_in_page(page['id'])
                     print(f"Database ID found: {database_id}")
