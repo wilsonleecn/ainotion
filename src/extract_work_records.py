@@ -24,7 +24,7 @@ class WorkRecordExtractor:
         
         while True:
             response = self.notion.search(
-                query="工作记录",  # Search for "Work Record" in Chinese
+                query="Work Log",  # Search for "Work Record" in Chinese
                 filter={"property": "object", "value": "page"},
                 start_cursor=start_cursor,
                 page_size=100
@@ -35,7 +35,7 @@ class WorkRecordExtractor:
                 title = self._get_page_title(page)
                 
                 # Check if it's a monthly work record (format: 工作记录YYYYMM)
-                if re.match(r'工作记录\d{6}$', title):
+                if re.match(r'Work Log \d{6}$', title):
                     work_records.append({
                         'id': page['id'],
                         'title': title,
@@ -102,7 +102,7 @@ class WorkRecordExtractor:
             return []
 
     def _process_record(self, record):
-        """处理数据库记录"""
+        """Process database record"""
         processed = {
             'id': record['id'],
             'created_time': record['created_time'],
@@ -116,7 +116,7 @@ class WorkRecordExtractor:
         return processed
 
     def _extract_property_value(self, prop_data):
-        """提取属性值"""
+        """Extract property value"""
         prop_type = prop_data['type']
         
         if prop_type == 'title':
@@ -141,7 +141,7 @@ class WorkRecordExtractor:
             return None
 
     def _extract_rich_text(self, rich_text_array):
-        """提取富文本内容"""
+        """Extract rich text content"""
         if not rich_text_array:
             return ""
         return " ".join(text['plain_text'] for text in rich_text_array)
