@@ -91,21 +91,23 @@ class WeeklyWorkLogExtractor:
                         filtered_records = []
                         for record in all_records:
                             props = record.get('properties', {})
-                            timestamp = props.get('timestamp', '')
-                            print(f"==timestamp: {timestamp}")
+                            timestamp = props.get('timestamp', {})
                             if timestamp and timestamp.get('date', {}).get('start'):
-                                print(f"==start: {timestamp.get('date', {}).get('start')}")
                                 record_date = datetime.fromisoformat(timestamp['date']['start'].replace('Z', '+00:00')).replace(tzinfo=None)
                                 if start_date <= record_date <= end_date:
+                                    # Get rich_text content
+                                    note_text = props.get('Note', {}).get('rich_text', [{}])[0].get('plain_text', '') if props.get('Note', {}).get('rich_text') else ''
+                                    request_from_text = props.get('Request from', {}).get('rich_text', [{}])[0].get('plain_text', '') if props.get('Request from', {}).get('rich_text') else ''
+                                    
                                     # Simplify record structure
                                     simplified_record = {
                                         'timestamp': timestamp['date']['start'],
-                                        'title': props.get('Title', ''),
-                                        'type': props.get('Type', []),
-                                        'status': props.get('Status', ''),
-                                        'note': props.get('Note', ''),
-                                        'co-worker': props.get('Co-worker', []),
-                                        'request_from': props.get('Request from', '')
+                                        'title': props.get('Title', {}).get('title', [{}])[0].get('plain_text', ''),
+                                        'type': props.get('Type', {}).get('multi_select', []),
+                                        'status': props.get('Status', {}).get('select', {}).get('name', ''),
+                                        'note': note_text,
+                                        'co-worker': props.get('Co-worker', {}).get('multi_select', []),
+                                        'request_from': request_from_text
                                     }
                                     filtered_records.append(simplified_record)
                         
