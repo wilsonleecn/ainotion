@@ -54,11 +54,16 @@ class WeeklyWorkLogExtractor:
         if isinstance(end_date, str):
             end_date = datetime.strptime(end_date, '%Y-%m-%d')
 
+        print(f"Start date (after conversion): {start_date}")
+        print(f"End date (after conversion): {end_date}")
+
         # Format dates for searching
         date_range = []
         current_date = start_date
         while current_date <= end_date:
-            date_range.append(f"Work Log {current_date.strftime('%Y%m%d')}")
+            formatted_date = f"Work Log {current_date.strftime('%Y%m%d')}"
+            date_range.append(formatted_date)
+            print(f"Adding date to search: {formatted_date}")
             current_date += timedelta(days=1)
 
         print(f"Looking for pages with titles: {date_range}")
@@ -127,6 +132,8 @@ class WeeklyWorkLogExtractor:
         """Extract simplified database content within the date range"""
         try:
             print(f"Extracting content from database: {database_id}")
+            print(f"Filtering for records between {start_date.isoformat()} and {end_date.isoformat()}")
+            
             filter_condition = {
                 "property": "timestamp",  # 假设字段名为 "timestamp"
                 "date": {
@@ -134,6 +141,7 @@ class WeeklyWorkLogExtractor:
                     "on_or_before": end_date.isoformat()
                 }
             }
+            print(f"Filter condition: {json.dumps(filter_condition, indent=2)}")
             
             response = self.notion.databases.query(
                 database_id=database_id,
@@ -141,16 +149,21 @@ class WeeklyWorkLogExtractor:
             )
             
             print(f"Found {len(response['results'])} records in database")
+            if len(response['results']) == 0:
+                print("No records found matching the date filter")
             
             simplified_records = []
             for record in response['results']:
                 processed = self._process_record(record)
-                if processed['properties']:  # Only add records with properties
+                if processed['properties']:
+                    print(f"Record properties: {json.dumps(processed['properties'], indent=2)}")
                     simplified_record = {
                         'id': record['id'],
                         'properties': processed['properties']
                     }
                     simplified_records.append(simplified_record)
+                else:
+                    print(f"Skipping record {record['id']} - no properties found")
             
             print(f"Processed {len(simplified_records)} records with properties")
             return simplified_records
