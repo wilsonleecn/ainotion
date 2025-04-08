@@ -20,14 +20,18 @@ class WeeklyWorkLogExtractor:
         elif isinstance(date, str):
             date = datetime.strptime(date, '%Y-%m-%d')
 
-        # Get the most recent Monday
-        monday = date - timedelta(days=date.weekday())
+        # 获取上周一的日期
+        # 如果今天是周日(6)，减去7天得到上周日，再减去6天得到上周一
+        # 如果是其他日子，先回到本周一，再减去7天得到上周一
+        if date.weekday() == 6:  # 周日
+            monday = date - timedelta(days=13)
+        else:
+            # 先回到本周一，再减去7天
+            monday = date - timedelta(days=date.weekday()) - timedelta(days=7)
         
-        # If today is Sunday or Monday, get the previous week
-        if date.weekday() in [0, 6]:
-            monday = monday - timedelta(days=7)
-            
+        # 从周一开始加6天得到周日
         sunday = monday + timedelta(days=6)
+        
         return monday, sunday
 
     def get_work_logs_by_date_range(self, start_date, end_date):
