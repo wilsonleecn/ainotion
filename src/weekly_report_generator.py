@@ -3,7 +3,7 @@
 import json
 from openai import OpenAI
 from config_reader import Config
-from extract_weekly_logs import extract_weekly_logs
+from extract_weekly_logs import WeeklyWorkLogExtractor
 
 # Initialize the OpenAI client
 client = OpenAI(api_key=Config.OPENAI_API_KEY)
@@ -24,8 +24,14 @@ def generate_weekly_report() -> str:
     2. 调用OpenAI接口生成周报
     3. 返回生成的周报内容
     """
-    # 获取一周工作日志
-    weekly_logs = extract_weekly_logs()
+    # 初始化工作日志提取器
+    extractor = WeeklyWorkLogExtractor(Config.NOTION_TOKEN)
+    
+    # 获取最近一周的日期范围
+    start_date, end_date = extractor.get_latest_complete_week()
+    
+    # 获取工作日志
+    weekly_logs = extractor.get_work_logs_by_date_range(start_date, end_date)
     
     # 将工作日志转换为JSON字符串
     logs_json = json.dumps(weekly_logs, ensure_ascii=False, indent=2)
