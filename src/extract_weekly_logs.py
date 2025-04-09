@@ -3,6 +3,7 @@ from notion_client import Client
 from datetime import datetime, timedelta
 import json
 import re
+from config_reader import Config
 
 class WeeklyWorkLogExtractor:
     def __init__(self, token):
@@ -159,9 +160,7 @@ class WeeklyWorkLogExtractor:
             return []
 
 def main():
-    NOTION_TOKEN = "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"
-    
-    extractor = WeeklyWorkLogExtractor(NOTION_TOKEN)
+    extractor = WeeklyWorkLogExtractor(Config.NOTION_TOKEN)
     
     # Get the latest complete week's date range
     start_date, end_date = extractor.get_latest_complete_week()
