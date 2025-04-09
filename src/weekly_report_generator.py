@@ -14,7 +14,7 @@ SYSTEM_PROMPT = """
 2. 总结尚未完成的工作，若其状态为Waiting for response，则说明正在等待co-worker的后续工作。
 3. 文末给出接下来工作重点和行动计划。
 
-请用中文回复，确保内容清晰易读。
+回复请确保内容清晰易读，用中文和英文各自输出一份
 """
 
 def generate_weekly_report() -> str:
