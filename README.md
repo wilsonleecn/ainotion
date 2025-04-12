@@ -8,7 +8,8 @@ docker run -it --rm -v $(pwd):/home/work/ ainotion:latest bash
 # --user $(id -u):$(id -g) , to avoid detected dubious ownership error
 # -v $HOME/.gitconfig:${whoami}/.gitconfig, to make run git config global user.name in the contianer to get global settings.
 docker run -it --rm -v $(pwd)/src/git:/home/work/git -v /home/work/sourcecode/:/home/work/sourcecode/ --user $(id -u):$(id -g) -v $HOME/.gitconfig:${whoami}/.gitconfig ainotion:latest bash
-docker run -it --rm -v ${pwd}/src/git:/home/work/git -v C:\MyProject\dev:/home/work/sourcecode/dev -v $HOME/.gitconfig:${whoami}/.gitconfig ainotion:latest bash
+# windows
+docker run -it --rm -v ${pwd}/src/git:/home/work/git -v C:\MyProject\dev:/home/work/sourcecode/dev -v C:\MyProject\off:/home/work/sourcecode/off -v $HOME/.gitconfig:/root/.gitconfig ainotion:latest bash
 
 # git command
 ## Count file changes from yesterday's commits
@@ -89,7 +90,7 @@ python src/git/main.py
 python src/git/main.py --since "2024-01-01" --until "2024-01-31"
 
 # 使用相对时间
-python src/git/main.py --since "1 week ago" --until "yesterday"
+python main.py --since "1 week ago" --until "yesterday"
 
 # 指定配置文件
 python src/git/main.py --config path/to/config.yaml --since "2024-01-01" --until "2024-01-31"
