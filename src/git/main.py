@@ -22,9 +22,12 @@ def process_repository(folder: str, stats_processor: StatsProcessor) -> ProjectS
     print("\nDetailed Statistics:")
     detailed = stats_processor.get_detailed_stats()
     for msg, data in detailed.items():
-        files_str = ','.join(data.files)
-        print(f"{msg:<40} ｜ {data.commits:2d} commits ｜ +{data.insertions} / -{data.deletions} | {files_str}")
-
+        print(f"{msg:<40} ｜ {data.commits:2d} commits ｜ +{data.insertions} / -{data.deletions} | {data.authors}")
+        # Print files in a bulleted list with indentation
+        for file in data.files:
+            print(f"    • {file}")
+        print()  # Add blank line between entries
+# 
     # Create and return ProjectStats object
     return ProjectStats(
         project_name=project_name,
