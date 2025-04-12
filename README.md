@@ -5,6 +5,10 @@ docker build -f docker/Dockerfile -t ainotion:latest .
 
 docker run -it --rm -v $(pwd):/home/work/ ainotion:latest bash
 
+# --user $(id -u):$(id -g) , to avoid detected dubious ownership error
+# -v $HOME/.gitconfig:${whoami}/.gitconfig, to make run git config global user.name in the contianer to get global settings.
+docker run -it --rm -v $(pwd)/src/git:/home/work/git -v /home/work/sourcecode/:/home/work/sourcecode/ --user $(id -u):$(id -g) -v $HOME/.gitconfig:${whoami}/.gitconfig ainotion:latest bash
+
 # git command
 ## Count file changes from yesterday's commits
 command:

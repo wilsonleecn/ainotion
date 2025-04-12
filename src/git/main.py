@@ -23,7 +23,7 @@ def process_repository(folder: str, stats_processor: StatsProcessor) -> ProjectS
     detailed = stats_processor.get_detailed_stats()
     for msg, data in detailed.items():
         files_str = ','.join(data.files)
-        print(f"{msg:<40} ｜ {data.commits:2d} commits ｜ +{data.insertions} / -{data.deletions} ｜ {files_str}")
+        print(f"{msg:<40} ｜ {data.commits:2d} commits ｜ +{data.insertions} / -{data.deletions} | {files_str}")
 
     # Create and return ProjectStats object
     return ProjectStats(
