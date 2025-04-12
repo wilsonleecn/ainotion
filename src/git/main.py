@@ -9,12 +9,18 @@ def process_repository(folder: str, stats_processor: StatsProcessor) -> ProjectS
     # Get project name from the last part of the folder path
     project_name = os.path.basename(os.path.normpath(folder))
     
+    # Get summary statistics first
+    summary = stats_processor.get_summary_stats()
+    
+    # Skip if no changes
+    if summary.files_changed == 0 and summary.insertions == 0 and summary.deletions == 0:
+        return None
+    
     print(f"\n=== Processing Project {project_name} ===")
     print(f"Project path: {folder}")
     print(f"Current user: {stats_processor.current_user}")
     
     # Get summary statistics
-    summary = stats_processor.get_summary_stats()
     print(f"\nSummary Statistics:")
     print(f"{summary.files_changed} files, +{summary.insertions}/-{summary.deletions} lines")
     
@@ -45,7 +51,8 @@ def process_directory(folder: str, stats_processor: StatsProcessor) -> list[Proj
         try:
             os.chdir(folder)
             stats = process_repository(folder, stats_processor)
-            results.append(stats)
+            if stats is not None:  # Only append if there are changes
+                results.append(stats)
         finally:
             os.chdir(os.path.dirname(folder))
     else:
