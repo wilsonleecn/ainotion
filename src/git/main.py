@@ -28,10 +28,15 @@ def process_repository(folder: str, stats_processor: StatsProcessor) -> ProjectS
     print("\nDetailed Statistics:")
     detailed = stats_processor.get_detailed_stats()
     for msg, data in detailed.items():
-        print(f"{msg:<40} ｜ {data.commits:2d} commits ｜ +{data.insertions} / -{data.deletions} | {data.authors}")
-        # Print files in a bulleted list with indentation
-        for file in data.files:
+        file_count = len(data.files)
+        file_info = f"{file_count} file{'s' if file_count != 1 else ''}"
+        print(f"{msg:<40} ｜ {data.commits:2d} commits | {file_info} ｜ +{data.insertions} / -{data.deletions} | {data.authors}")
+        # Print files in a bulleted list with indentation, limited to first 5
+        MAX_FILES_TO_SHOW = 5
+        for file in data.files[:MAX_FILES_TO_SHOW]:
             print(f"    • {file}")
+        if len(data.files) > MAX_FILES_TO_SHOW:
+            print(f"    ... and {len(data.files) - MAX_FILES_TO_SHOW} more files")
         print()  # Add blank line between entries
 # 
     # Create and return ProjectStats object
