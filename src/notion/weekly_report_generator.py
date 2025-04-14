@@ -10,9 +10,10 @@ client = OpenAI(api_key=Config.OPENAI_API_KEY)
 
 SYSTEM_PROMPT = """
 你是一位专业的项目管理助理，请根据提供的工作记录，帮助生成一份简明的工作周报。要求：
-1. 总结本周完成的重要事项。
-2. 总结尚未完成的工作，若其状态为Waiting for response，则说明正在等待co-worker的后续工作。
-3. 文末给出接下来工作重点和行动计划。
+1. 在开头标注本周报的日期范围。
+2. 总结本周完成的重要事项。
+3. 总结尚未完成的工作，若其状态为Waiting for response，则说明正在等待co-worker的后续工作。
+4. 文末给出接下来工作重点和行动计划。
 
 回复请确保内容清晰易读，用中文和英文各自输出一份
 """
@@ -35,12 +36,21 @@ def generate_weekly_report() -> str:
     weekly_logs = extractor.get_work_logs_by_date_range(start_date, end_date)
     
     # 检查工作日志是否为空
-    if not weekly_logs:
+    if weekly_logs is None:
+        return "工作日志获取失败，返回值为None。请检查数据库连接和查询条件。"
+    elif not weekly_logs:
         return "未找到指定日期范围内的工作日志。请检查数据库中是否存在相应记录。"
     
-    # 将工作日志转换为JSON字符串
+    # 将工作日志转换为JSON字符串，并添加日期范围信息
     try:
-        logs_json = json.dumps(weekly_logs, ensure_ascii=False, indent=2)
+        report_data = {
+            "date_range": {
+                "start": start_date.strftime("%Y-%m-%d"),
+                "end": end_date.strftime("%Y-%m-%d")
+            },
+            "work_logs": weekly_logs
+        }
+        logs_json = json.dumps(report_data, ensure_ascii=False, indent=2)
     except Exception as e:
         return f"转换工作日志时发生错误: {str(e)}"
     
