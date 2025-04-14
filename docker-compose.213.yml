@@ -1,0 +1,43 @@
+services:
+  mariadb:
+    image: mariadb:latest
+    container_name: mariadb
+    restart: always
+    # Set root password
+    environment:
+      - MARIADB_ROOT_PASSWORD=root
+      - MARIADB_DATABASE=work_records
+      - MARIADB_USER=dbuser
+      - MARIADB_PASSWORD=db3213
+      - TZ=America/Los_Angeles
+    # Expose the MySQL port.
+    expose:
+      - "3306"
+    # Mount our init scripts
+    volumes:
+      - ./db/init:/docker-entrypoint-initdb.d
+      - /data/ainotion:/var/lib/mysql
+      - /usr/share/zoneinfo/America/Los_Angeles:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+  ainotion:
+    image: ainotion:latest
+    container_name: ainotion
+    restart: always
+    working_dir: /home/work/ainotion
+    env_file:
+      - .env
+    volumes:
+      - ./src:/home/work/ainotion
+      - /usr/share/zoneinfo/America/Los_Angeles:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+      - /home/work:/home/work/sourcecode
+      - $HOME/.gitconfig:/root/.gitconfig
+    # ports:
+    #   - "5000:5000"
+    # Keep container alive with tail -f /dev/null if no other command is needed
+    command: tail -f /dev/null
+    # Alternatively, uncomment one of these if you need to run a specific service:
+    # command: python web_server.py
+    # command: python gradio_chat.py
+    environment:
+      - TZ=America/Los_Angeles
