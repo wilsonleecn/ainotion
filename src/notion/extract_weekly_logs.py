@@ -71,45 +71,57 @@ class WeeklyWorkLogExtractor:
             
             for page in response['results']:
                 title = self._get_page_title(page)
+                print(f"Processing page with title: {title}")
                 
                 if title == date_title:
                     database_id = self.find_database_in_page(page['id'])
-                    print(f"Database ID found: {database_id}")
+                    if not database_id:
+                        print(f"No database found in page {page['id']}")
+                        continue
                     
-                    if database_id:
-                        records = self.extract_database_content(database_id, start_date, end_date)
-                        # Filter records within the date range
-                        for record in records:
-                            props = record.get('properties', {})
-                            timestamp = props.get('timestamp', {})
-                            if timestamp and timestamp.get('date', {}).get('start'):
-                                record_date = datetime.fromisoformat(timestamp['date']['start'].replace('Z', '+00:00')).replace(tzinfo=None)
-                                if start_date <= record_date <= end_date:
-                                    # Get rich_text content
-                                    note_text = props.get('Note', {}).get('rich_text', [{}])[0].get('plain_text', '') if props.get('Note', {}).get('rich_text') else ''
-                                    request_from_text = props.get('Request from', {}).get('rich_text', [{}])[0].get('plain_text', '') if props.get('Request from', {}).get('rich_text') else ''
-                                    
-                                    # Extract type names from multi_select
-                                    type_names = [t.get('name', '') for t in props.get('Type', {}).get('multi_select', [])]
-                                    # Extract co-worker names from multi_select
-                                    coworker_names = [c.get('name', '') for c in props.get('Co-worker', {}).get('multi_select', [])]
-                                    
-                                    # Simplify record structure
-                                    simplified_record = {
-                                        'timestamp': timestamp['date']['start'],
-                                        'title': props.get('Title', {}).get('title', [{}])[0].get('plain_text', ''),
-                                        'type': type_names,
-                                        'status': props.get('Status', {}).get('select', {}).get('name', ''),
-                                        'note': note_text,
-                                        'co-worker': coworker_names,
-                                        'request_from': request_from_text
-                                    }
-                                    all_records.append(simplified_record)
+                    print(f"Database ID found: {database_id}")
+                    records = self.extract_database_content(database_id, start_date, end_date)
+                    print(f"Records retrieved from database: {len(records)}")
+                    
+                    if not records:
+                        print("No records found in database")
+                        continue
+                    
+                    # Filter records within the date range
+                    for record in records:
+                        props = record.get('properties', {})
+                        timestamp = props.get('timestamp', {})
+                        if timestamp and timestamp.get('date', {}).get('start'):
+                            record_date = datetime.fromisoformat(timestamp['date']['start'].replace('Z', '+00:00')).replace(tzinfo=None)
+                            if start_date <= record_date <= end_date:
+                                # Get rich_text content
+                                note_text = props.get('Note', {}).get('rich_text', [{}])[0].get('plain_text', '') if props.get('Note', {}).get('rich_text') else ''
+                                request_from_text = props.get('Request from', {}).get('rich_text', [{}])[0].get('plain_text', '') if props.get('Request from', {}).get('rich_text') else ''
+                                
+                                # Extract type names from multi_select
+                                type_names = [t.get('name', '') for t in props.get('Type', {}).get('multi_select', [])]
+                                # Extract co-worker names from multi_select
+                                coworker_names = [c.get('name', '') for c in props.get('Co-worker', {}).get('multi_select', [])]
+                                
+                                # Simplify record structure
+                                simplified_record = {
+                                    'timestamp': timestamp['date']['start'],
+                                    'title': props.get('Title', {}).get('title', [{}])[0].get('plain_text', ''),
+                                    'type': type_names,
+                                    'status': props.get('Status', {}).get('select', {}).get('name', ''),
+                                    'note': note_text,
+                                    'co-worker': coworker_names,
+                                    'request_from': request_from_text
+                                }
+                                all_records.append(simplified_record)
         
         # Sort records by timestamp
         all_records.sort(key=lambda x: x['timestamp'])
         
         print(f"\nTotal records found: {len(all_records)}")
+        if not all_records:
+            print("Warning: No records were found for the specified date range")
+            return []
         return all_records
 
     def _get_page_title(self, page):
@@ -149,14 +161,18 @@ class WeeklyWorkLogExtractor:
                 }
             }
 
+            print(f"Querying database with filter: {filter_condition}")
             response = self.notion.databases.query(
                 database_id=database_id,
                 filter=filter_condition
             )
-            return response.get('results', [])
+            results = response.get('results', [])
+            print(f"Database query returned {len(results)} results")
+            return results
 
         except Exception as e:
-            print(f"Error extracting database content: {e}")
+            print(f"Error extracting database content: {str(e)}")
+            print(f"Error type: {type(e)}")
             return []
 
 def main():
