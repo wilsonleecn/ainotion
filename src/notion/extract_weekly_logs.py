@@ -40,8 +40,6 @@ class WeeklyWorkLogExtractor:
         Get work logs between start_date and end_date
         Returns array of work logs sorted by timestamp
         """
-        print(f"\nSearching work logs from {start_date} to {end_date}")
-        
         # Convert dates to datetime if they're strings
         if isinstance(start_date, str):
             start_date = datetime.strptime(start_date, '%Y-%m-%d')
@@ -56,55 +54,41 @@ class WeeklyWorkLogExtractor:
             date_range.add(formatted_date)
             current_date += timedelta(days=1)
 
-        print(f"Looking for pages with titles: {date_range}")
         all_records = []  # Store all records here instead of using work_logs dict
         
         # Search for each monthly work log
         for date_title in date_range:
-            print(f"\nSearching for: {date_title}")
             response = self.notion.search(
                 query=date_title,
                 filter={"property": "object", "value": "page"}
             )
             
-            print(f"Found {len(response['results'])} results")
-            
             for page in response['results']:
                 title = self._get_page_title(page)
-                print(f"Processing page with title: {title}")
                 
                 if title == date_title:
                     database_id = self.find_database_in_page(page['id'])
                     if not database_id:
-                        print(f"No database found in page {page['id']}")
                         continue
                     
-                    print(f"Database ID found: {database_id}")
                     records = self.extract_database_content(database_id, start_date, end_date)
-                    print(f"Records retrieved from database: {len(records)}")
-                    
                     if not records:
-                        print("No records found in database")
                         continue
                     
                     # Filter records within the date range
                     for record in records:
-                        print(f"==========\nProcessing record: {record}\n==========")
                         try:
                             props = record.get('properties', {})
                             if not props:
-                                print(f"Warning: No properties found in record")
                                 continue
 
                             timestamp = props.get('timestamp', {})
                             if not timestamp or not timestamp.get('date', {}).get('start'):
-                                print(f"Warning: Invalid timestamp in record")
                                 continue
 
                             record_date = datetime.fromisoformat(timestamp['date']['start'].replace('Z', '+00:00')).replace(tzinfo=None)
                             
                             if start_date <= record_date <= end_date:
-                                # Safely get properties with default values
                                 note = props.get('Note', {}).get('rich_text', [])
                                 note_text = note[0].get('plain_text', '') if note else ''
                                 
@@ -114,12 +98,9 @@ class WeeklyWorkLogExtractor:
                                 title_prop = props.get('Title', {}).get('title', [])
                                 title_text = title_prop[0].get('plain_text', '') if title_prop else ''
                                 
-                                # Extract type names from multi_select
                                 type_names = [t.get('name', '') for t in props.get('Type', {}).get('multi_select', [])]
-                                # Extract co-worker names from multi_select
                                 coworker_names = [c.get('name', '') for c in props.get('Co-worker', {}).get('multi_select', [])]
                                 
-                                # Create simplified record with safe defaults
                                 simplified_record = {
                                     'timestamp': timestamp['date']['start'],
                                     'title': title_text,
@@ -130,14 +111,12 @@ class WeeklyWorkLogExtractor:
                                     'request_from': request_from_text
                                 }
                                 all_records.append(simplified_record)
-                        except Exception as e:
-                            print(f"Error processing record: {str(e)}")
+                        except Exception:
                             continue
         
         # Sort records by timestamp
         all_records.sort(key=lambda x: x['timestamp'])
         
-        print(f"\nTotal records found: {len(all_records)}")
         return all_records  # Always return a list, even if empty
 
     def _get_page_title(self, page):
@@ -156,15 +135,12 @@ class WeeklyWorkLogExtractor:
     def find_database_in_page(self, page_id):
         """Find database in page"""
         try:
-            print(f"Looking for database in page: {page_id}")
             children = self.notion.blocks.children.list(block_id=page_id)
             for block in children['results']:
                 if block['type'] == 'child_database':
                     return block['id']
-            print("No database found in page")
             return None
-        except Exception as e:
-            print(f"Error finding database: {str(e)}")
+        except Exception:
             return None
 
     def extract_database_content(self, database_id, start_date, end_date):
@@ -177,18 +153,13 @@ class WeeklyWorkLogExtractor:
                 }
             }
 
-            print(f"Querying database with filter: {filter_condition}")
             response = self.notion.databases.query(
                 database_id=database_id,
                 filter=filter_condition
             )
-            results = response.get('results', [])
-            print(f"Database query returned {len(results)} results")
-            return results
+            return response.get('results', [])
 
-        except Exception as e:
-            print(f"Error extracting database content: {str(e)}")
-            print(f"Error type: {type(e)}")
+        except Exception:
             return []
 
 def main():
