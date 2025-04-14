@@ -90,6 +90,7 @@ class WeeklyWorkLogExtractor:
                     # Filter records within the date range
                     print(f"Records: {records}")
                     for record in records:
+                        print(f"==Processing record: {record}")
                         try:
                             props = record.get('properties', {})
                             if not props:
