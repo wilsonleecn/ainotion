@@ -29,12 +29,20 @@ def generate_weekly_report() -> str:
     
     # 获取最近一周的日期范围
     start_date, end_date = extractor.get_latest_complete_week()
+    print(f"\n获取工作日志范围: {start_date} 到 {end_date}")
     
     # 获取工作日志
     weekly_logs = extractor.get_work_logs_by_date_range(start_date, end_date)
     
+    # 检查工作日志是否为空
+    if not weekly_logs:
+        return "未找到指定日期范围内的工作日志。请检查数据库中是否存在相应记录。"
+    
     # 将工作日志转换为JSON字符串
-    logs_json = json.dumps(weekly_logs, ensure_ascii=False, indent=2)
+    try:
+        logs_json = json.dumps(weekly_logs, ensure_ascii=False, indent=2)
+    except Exception as e:
+        return f"转换工作日志时发生错误: {str(e)}"
     
     # 准备消息
     messages = [
