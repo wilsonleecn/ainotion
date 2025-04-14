@@ -89,24 +89,39 @@ class WeeklyWorkLogExtractor:
                     
                     # Filter records within the date range
                     for record in records:
-                        props = record.get('properties', {})
-                        timestamp = props.get('timestamp', {})
-                        if timestamp and timestamp.get('date', {}).get('start'):
+                        try:
+                            props = record.get('properties', {})
+                            if not props:
+                                print(f"Warning: No properties found in record")
+                                continue
+
+                            timestamp = props.get('timestamp', {})
+                            if not timestamp or not timestamp.get('date', {}).get('start'):
+                                print(f"Warning: Invalid timestamp in record")
+                                continue
+
                             record_date = datetime.fromisoformat(timestamp['date']['start'].replace('Z', '+00:00')).replace(tzinfo=None)
+                            
                             if start_date <= record_date <= end_date:
-                                # Get rich_text content
-                                note_text = props.get('Note', {}).get('rich_text', [{}])[0].get('plain_text', '') if props.get('Note', {}).get('rich_text') else ''
-                                request_from_text = props.get('Request from', {}).get('rich_text', [{}])[0].get('plain_text', '') if props.get('Request from', {}).get('rich_text') else ''
+                                # Safely get properties with default values
+                                note = props.get('Note', {}).get('rich_text', [])
+                                note_text = note[0].get('plain_text', '') if note else ''
+                                
+                                request_from = props.get('Request from', {}).get('rich_text', [])
+                                request_from_text = request_from[0].get('plain_text', '') if request_from else ''
+                                
+                                title_prop = props.get('Title', {}).get('title', [])
+                                title_text = title_prop[0].get('plain_text', '') if title_prop else ''
                                 
                                 # Extract type names from multi_select
                                 type_names = [t.get('name', '') for t in props.get('Type', {}).get('multi_select', [])]
                                 # Extract co-worker names from multi_select
                                 coworker_names = [c.get('name', '') for c in props.get('Co-worker', {}).get('multi_select', [])]
                                 
-                                # Simplify record structure
+                                # Create simplified record with safe defaults
                                 simplified_record = {
                                     'timestamp': timestamp['date']['start'],
-                                    'title': props.get('Title', {}).get('title', [{}])[0].get('plain_text', ''),
+                                    'title': title_text,
                                     'type': type_names,
                                     'status': props.get('Status', {}).get('select', {}).get('name', ''),
                                     'note': note_text,
@@ -114,15 +129,15 @@ class WeeklyWorkLogExtractor:
                                     'request_from': request_from_text
                                 }
                                 all_records.append(simplified_record)
+                        except Exception as e:
+                            print(f"Error processing record: {str(e)}")
+                            continue
         
         # Sort records by timestamp
         all_records.sort(key=lambda x: x['timestamp'])
         
         print(f"\nTotal records found: {len(all_records)}")
-        if not all_records:
-            print("Warning: No records were found for the specified date range")
-            return []
-        return all_records
+        return all_records  # Always return a list, even if empty
 
     def _get_page_title(self, page):
         """Get page title"""
