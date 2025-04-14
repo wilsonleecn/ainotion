@@ -30,6 +30,9 @@ services:
       - ./src:/home/work/ainotion
       - /usr/share/zoneinfo/America/Los_Angeles:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
+      - C:\MyProject\dev:/home/work/sourcecode/dev
+      - C:\MyProject\off:/home/work/sourcecode/off
+      - $HOME/.gitconfig:/root/.gitconfig
     # ports:
     #   - "5000:5000"
     # Keep container alive with tail -f /dev/null if no other command is needed
