@@ -89,6 +89,9 @@ class WeeklyWorkLogExtractor:
                             record_date = datetime.fromisoformat(timestamp['date']['start'].replace('Z', '+00:00')).replace(tzinfo=None)
                             
                             if start_date <= record_date <= end_date:
+                                # Add formatted date
+                                formatted_date = record_date.strftime("%Y.%m.%d")
+                                
                                 note = props.get('Note', {}).get('rich_text', [])
                                 note_text = note[0].get('plain_text', '') if note else ''
                                 
@@ -102,6 +105,7 @@ class WeeklyWorkLogExtractor:
                                 coworker_names = [c.get('name', '') for c in props.get('Co-worker', {}).get('multi_select', [])]
                                 
                                 simplified_record = {
+                                    'date': formatted_date,  # Add formatted date
                                     'timestamp': timestamp['date']['start'],
                                     'title': title_text,
                                     'type': type_names,
