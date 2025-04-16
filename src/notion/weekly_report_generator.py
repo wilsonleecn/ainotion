@@ -6,7 +6,7 @@ from config_reader import Config
 from extract_weekly_logs import WeeklyWorkLogExtractor
 
 # Initialize the OpenAI client
-client = OpenAI(api_key=Config.OPENAI_API_KEY)
+client = OpenAI(api_key=Config.AI_ENGIN_API_KEY, base_url=Config.AI_ENGIN_BASE_URL)
 
 SYSTEM_PROMPT = """
 你是一位专业的项目管理助理，请根据提供的工作记录，帮助生成一份简明的工作周报。要求：
