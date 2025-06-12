@@ -36,92 +36,93 @@ class WeeklyWorkLogExtractor:
         return monday, sunday
 
     def get_work_logs_by_date_range(self, start_date, end_date):
-        """
-        Get work logs between start_date and end_date
-        Returns array of work logs sorted by timestamp
-        """
-        # Convert dates to datetime if they're strings
         if isinstance(start_date, str):
             start_date = datetime.strptime(start_date, '%Y-%m-%d')
         if isinstance(end_date, str):
             end_date = datetime.strptime(end_date, '%Y-%m-%d')
 
-        # Format dates for searching - modified to use YYYYMM format
-        date_range = set()  # Using set to avoid duplicates
+        date_range = set()
         current_date = start_date
         while current_date <= end_date:
             formatted_date = f"Work Log {current_date.strftime('%Y%m')}"
             date_range.add(formatted_date)
             current_date += timedelta(days=1)
 
-        all_records = []  # Store all records here instead of using work_logs dict
-        
-        # Search for each monthly work log
+        all_records = []
+
         for date_title in date_range:
+            print(f"\n🔍 Searching Notion for page titled: {date_title}")
             response = self.notion.search(
                 query=date_title,
                 filter={"property": "object", "value": "page"}
             )
-            
+
+            print(f"🧾 Found {len(response['results'])} candidate pages.")
             for page in response['results']:
                 title = self._get_page_title(page)
-                
-                if title == date_title:
-                    database_id = self.find_database_in_page(page['id'])
-                    if not database_id:
-                        continue
-                    
-                    records = self.extract_database_content(database_id, start_date, end_date)
-                    if not records:
-                        continue
-                    
-                    # Filter records within the date range
-                    for record in records:
-                        try:
-                            props = record.get('properties', {})
-                            if not props:
-                                continue
+                print(f"➡️  Page title: {title}")
+                if title != date_title:
+                    print("⛔ 跳过：标题不匹配")
+                    continue
 
-                            timestamp = props.get('timestamp', {})
-                            if not timestamp or not timestamp.get('date', {}).get('start'):
-                                continue
+                print("✅ 标题匹配，尝试查找子数据库")
+                database_id = self.find_database_in_page(page['id'])
+                if not database_id:
+                    print("⛔ 未找到子数据库")
+                    continue
+                print(f"📦 子数据库ID: {database_id}")
 
-                            record_date = datetime.fromisoformat(timestamp['date']['start'].replace('Z', '+00:00')).replace(tzinfo=None)
-                            
-                            if start_date <= record_date <= end_date:
-                                # Add formatted date
-                                formatted_date = record_date.strftime("%Y.%m.%d")
-                                
-                                note = props.get('Note', {}).get('rich_text', [])
-                                note_text = note[0].get('plain_text', '') if note else ''
-                                
-                                request_from = props.get('Request from', {}).get('rich_text', [])
-                                request_from_text = request_from[0].get('plain_text', '') if request_from else ''
-                                
-                                title_prop = props.get('Title', {}).get('title', [])
-                                title_text = title_prop[0].get('plain_text', '') if title_prop else ''
-                                
-                                type_names = [t.get('name', '') for t in props.get('Type', {}).get('multi_select', [])]
-                                coworker_names = [c.get('name', '') for c in props.get('Co-worker', {}).get('multi_select', [])]
-                                
-                                simplified_record = {
-                                    'date': formatted_date,  # Add formatted date
-                                    'timestamp': timestamp['date']['start'],
-                                    'title': title_text,
-                                    'type': type_names,
-                                    'status': props.get('Status', {}).get('select', {}).get('name', ''),
-                                    'note': note_text,
-                                    'co-worker': coworker_names,
-                                    'request_from': request_from_text
-                                }
-                                all_records.append(simplified_record)
-                        except Exception:
+                records = self.extract_database_content(database_id, start_date, end_date)
+                print(f"📄 提取到 {len(records)} 条记录")
+
+                if not records:
+                    continue
+
+                for record in records:
+                    try:
+                        props = record.get('properties', {})
+                        timestamp = props.get('timestamp', {})
+                        record_date_str = timestamp.get('date', {}).get('start')
+
+                        if not record_date_str:
                             continue
-        
-        # Sort records by timestamp
-        all_records.sort(key=lambda x: x['timestamp'])
-        
-        return all_records  # Always return a list, even if empty
+
+                        record_date = datetime.fromisoformat(record_date_str.replace('Z', '+00:00')).replace(tzinfo=None)
+                        if start_date <= record_date <= end_date:
+                            formatted_date = record_date.strftime("%Y.%m.%d")
+                            title_text = props.get('Title', {}).get('title', [])
+                            title_text = title_text[0]['plain_text'] if title_text else ''
+
+                            print(f"📌 有效记录：{formatted_date} - {title_text}")
+
+                            note = props.get('Note', {}).get('rich_text', [])
+                            note_text = note[0].get('plain_text', '') if note else ''
+
+                            request_from = props.get('Request from', {}).get('rich_text', [])
+                            request_from_text = request_from[0].get('plain_text', '') if request_from else ''
+
+                            type_names = [t.get('name', '') for t in props.get('Type', {}).get('multi_select', [])]
+                            coworker_names = [c.get('name', '') for c in props.get('Co-worker', {}).get('multi_select', [])]
+
+                            simplified_record = {
+                                'date': formatted_date,
+                                'timestamp': record_date_str,
+                                'title': title_text,
+                                'type': type_names,
+                                'status': props.get('Status', {}).get('select', {}).get('name', ''),
+                                'note': note_text,
+                                'co-worker': coworker_names,
+                                'request_from': request_from_text
+                            }
+                            all_records.append(simplified_record)
+                        else:
+                            print(f"⛔ 跳过记录：日期 {record_date.strftime('%Y-%m-%d')} 不在范围内")
+                    except Exception as e:
+                        print(f"⚠️ 解析记录出错: {e}")
+                        continue
+
+        print(f"\n✅ 最终返回 {len(all_records)} 条记录")
+        return all_records
 
     def _get_page_title(self, page):
         """Get page title"""
