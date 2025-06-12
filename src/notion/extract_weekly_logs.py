@@ -80,9 +80,6 @@ class WeeklyWorkLogExtractor:
                             continue
 
                         record_date = datetime.fromisoformat(record_date_str.replace('Z', '+00:00')).replace(tzinfo=None)
-                        print(f" === record_date={record_date}")
-                        print(f" === start_date ={start_date}")
-                        print(f" === end_date   ={end_date}")
                         if start_date <= record_date <= end_date:
                             formatted_date = record_date.strftime("%Y.%m.%d")
                             title_text = props.get('Title', {}).get('title', [])
@@ -110,8 +107,6 @@ class WeeklyWorkLogExtractor:
                                 'request_from': request_from_text
                             }
                             all_records.append(simplified_record)
-                        else:
-                            print(f"⛔ 跳过记录：日期 {record_date.strftime('%Y-%m-%d')} 不在范围内")
                     except Exception as e:
                         print(f"⚠️ 解析记录出错: {e}")
                         continue
