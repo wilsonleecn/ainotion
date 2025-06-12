@@ -70,12 +70,19 @@ def generate_weekly_report() -> str:
     ]
 
     # 调用OpenAI接口
+    # response = client.chat.completions.create(
+    #     model="o4-mini",
+    #     messages=messages,
+    #     temperature=0.7,
+    #     max_tokens=1000
+    # )
     response = client.chat.completions.create(
-        model="o4-mini",
+        model="deepseek-chat",
         messages=messages,
         temperature=0.7,
         max_tokens=1000
     )
+
 
     # 提取生成的周报内容
     weekly_report = response.choices[0].message.content

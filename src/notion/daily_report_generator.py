@@ -37,8 +37,14 @@ def generate_daily_report():
         {"role": "user", "content": f"以下是今天的工作记录：\n{logs_json}"}
     ]
     print("----------------------------------")
+    # response = client.chat.completions.create(
+    #     model="o4-mini",
+    #     messages=messages,
+    #     temperature=0.7,
+    #     max_tokens=1000
+    # )
     response = client.chat.completions.create(
-        model="o4-mini",
+        model="deepseek-chat",
         messages=messages,
         temperature=0.7,
         max_tokens=1000
