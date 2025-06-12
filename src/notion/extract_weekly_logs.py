@@ -42,12 +42,10 @@ class WeeklyWorkLogExtractor:
             end_date = datetime.strptime(end_date, '%Y-%m-%d').replace(hour=23, minute=59, second=59, microsecond=999999)
         else:
             end_date = end_date.replace(hour=23, minute=59, second=59, microsecond=999999)
-            print(f" *** end_date   ={end_date}")
 
         date_range = set()
         current_date = start_date
         while current_date <= end_date:
-            formatted_date = f"Work Log {current_date.strftime('%Y%m')}"
             date_range.add(formatted_date)
             current_date += timedelta(days=1)
 
