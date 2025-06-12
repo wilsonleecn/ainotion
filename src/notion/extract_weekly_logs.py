@@ -63,20 +63,9 @@ class WeeklyWorkLogExtractor:
             print(f"🧾 Found {len(response['results'])} candidate pages.")
             for page in response['results']:
                 title = self._get_page_title(page)
-                print(f"➡️  Page title: {title}")
-                if title != date_title:
-                    print("⛔ 跳过：标题不匹配")
-                    continue
 
-                print("✅ 标题匹配，尝试查找子数据库")
                 database_id = self.find_database_in_page(page['id'])
-                if not database_id:
-                    print("⛔ 未找到子数据库")
-                    continue
-                print(f"📦 子数据库ID: {database_id}")
-
                 records = self.extract_database_content(database_id, start_date, end_date)
-                print(f"📄 提取到 {len(records)} 条记录")
 
                 if not records:
                     continue
