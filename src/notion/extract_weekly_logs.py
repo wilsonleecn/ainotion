@@ -37,9 +37,9 @@ class WeeklyWorkLogExtractor:
 
     def get_work_logs_by_date_range(self, start_date, end_date):
         if isinstance(start_date, str):
-            start_date = datetime.strptime(start_date, '%Y-%m-%d')
+            start_date = datetime.strptime(start_date, '%Y-%m-%d').replace(hour=0, minute=0, second=0, microsecond=0)
         if isinstance(end_date, str):
-            end_date = datetime.strptime(end_date, '%Y-%m-%d')
+            end_date = datetime.strptime(end_date, '%Y-%m-%d').replace(hour=23, minute=59, second=59, microsecond=999999)
 
         date_range = set()
         current_date = start_date
