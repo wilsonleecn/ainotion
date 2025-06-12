@@ -36,7 +36,7 @@ def generate_daily_report():
         {"role": "system", "content": SYSTEM_PROMPT},
         {"role": "user", "content": f"以下是今天的工作记录：\n{logs_json}"}
     ]
-
+    print("----------------------------------")
     response = client.chat.completions.create(
         model="o4-mini",
         messages=messages,
