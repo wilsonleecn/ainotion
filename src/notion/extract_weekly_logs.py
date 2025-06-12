@@ -42,10 +42,12 @@ class WeeklyWorkLogExtractor:
             end_date = datetime.strptime(end_date, '%Y-%m-%d').replace(hour=23, minute=59, second=59, microsecond=999999)
         else:
             end_date = end_date.replace(hour=23, minute=59, second=59, microsecond=999999)
+            print(f" *** end_date   ={end_date}")
 
         date_range = set()
         current_date = start_date
         while current_date <= end_date:
+            formatted_date = f"Work Log {current_date.strftime('%Y%m')}"
             date_range.add(formatted_date)
             current_date += timedelta(days=1)
 
@@ -61,8 +63,8 @@ class WeeklyWorkLogExtractor:
             print(f"🧾 Found {len(response['results'])} candidate pages.")
             for page in response['results']:
                 title = self._get_page_title(page)
-
                 database_id = self.find_database_in_page(page['id'])
+
                 records = self.extract_database_content(database_id, start_date, end_date)
 
                 if not records:
