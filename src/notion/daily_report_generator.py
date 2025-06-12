@@ -12,8 +12,8 @@ client = OpenAI(api_key=Config.AI_ENGIN_API_KEY, base_url=Config.AI_ENGIN_BASE_U
 SYSTEM_PROMPT = """
 你是一位专业的项目管理助理，请根据今天的工作记录，生成一份清晰的工作日报，内容包括：
 
-1. 今日完成的工作：用“✅”标记；每条带有（YYYY.MM.DD）格式日期。
-2. 今日未完成的工作：用“⏳”标记；每条带有（YYYY.MM.DD）格式日期，若状态为 Waiting for response，请说明是等待同事反馈。
+1. 今日完成的工作：用“✅”标记；每条带有（HH：MM）格式时间。
+2. 今日未完成的工作：用“⏳”标记；若状态为 Waiting for response，请说明是等待同事反馈。
 
 请用中文和英文分别生成两部分内容。
 """
