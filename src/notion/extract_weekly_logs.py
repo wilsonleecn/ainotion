@@ -85,8 +85,6 @@ class WeeklyWorkLogExtractor:
                             title_text = props.get('Title', {}).get('title', [])
                             title_text = title_text[0]['plain_text'] if title_text else ''
 
-                            print(f"📌 有效记录：{formatted_date} - {title_text}")
-
                             note = props.get('Note', {}).get('rich_text', [])
                             note_text = note[0].get('plain_text', '') if note else ''
 
