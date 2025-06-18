@@ -28,7 +28,7 @@ def generate_daily_report(for_date: datetime):
     day_end = for_date.replace(hour=23, minute=59, second=59, microsecond=999999)
 
     extractor = WeeklyWorkLogExtractor(Config.NOTION_TOKEN)
-    logs = extractor.get_work_logs_by_date_range(today, today)
+    logs = extractor.get_work_logs_by_date_range(day_start, day_end)
 
     if not logs:
         return "❌ 今日无工作记录。"
