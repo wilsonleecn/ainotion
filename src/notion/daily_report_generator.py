@@ -34,7 +34,7 @@ def generate_daily_report(for_date: datetime):
         return "❌ 今日无工作记录。"
 
     logs_json = json.dumps({
-        "date": today.strftime("%Y-%m-%d"),
+        "date": for_date.strftime("%Y-%m-%d"),
         "work_logs": logs
     }, ensure_ascii=False, indent=2)
 
