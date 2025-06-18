@@ -107,7 +107,6 @@ class WeeklyWorkLogExtractor:
                                 'co-worker': coworker_names,
                                 'request_from': request_from_text
                             }
-                            print(simplified_record)
                             all_records.append(simplified_record)
                     except Exception as e:
                         print(f"⚠️ 解析记录出错: {e}")
