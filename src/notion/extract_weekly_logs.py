@@ -87,6 +87,9 @@ class WeeklyWorkLogExtractor:
                             note = props.get('Note', {}).get('rich_text', [])
                             note_text = note[0].get('plain_text', '') if note else ''
 
+                            details = props.get('Details', {}).get('rich_text', [])
+                            details_text = note[0].get('plain_text', '') if note else ''
+
                             request_from = props.get('Request from', {}).get('rich_text', [])
                             request_from_text = request_from[0].get('plain_text', '') if request_from else ''
 
@@ -99,6 +102,7 @@ class WeeklyWorkLogExtractor:
                                 'title': title_text,
                                 'type': type_names,
                                 'status': props.get('Status', {}).get('select', {}).get('name', ''),
+                                'details': details_text,
                                 'note': note_text,
                                 'co-worker': coworker_names,
                                 'request_from': request_from_text
